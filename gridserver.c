@@ -23,8 +23,16 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
       printf("Message received: %s\n",msg.mText);
-   }    
+      
+      /* sends message to griddisplay*//*
+      if (msgsnd(msgid,&msg,sizeof(msg)-sizeof(long), 0) == -1)
+      {
+            // error handling
+            fprintf(stderr,"%s: Can't send message\n",argv[0]);
+            return EXIT_FAILURE;
+      }
+      printf("Message sent: %s\n",msg.mText);
+      */
+   }
    return EXIT_SUCCESS;
 }
-
-
