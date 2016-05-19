@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-all: testsignal myfifo mypipe mypopen myqueue_client myqueue_server
+all: testsignal myfifo mypipe mypopen myqueue_client gridserver
 
 testsignal: testsignal.o
 	${CC} ${CFLAGS} testsignal.o -o testsignal
@@ -34,8 +34,8 @@ myqueue_client: myqueue_client.o
 myqueue_client.o: myqueue_client.c
 	${CC} ${CFLAGS} -c myqueue_client.c -o myqueue_client.o
 
-myqueue_server: myqueue_server.o
-	${CC} ${CFLAGS} myqueue_server.o -o myqueue_server
+gridserver: gridserver.o
+	${CC} ${CFLAGS} gridserver.o -o gridserver
 
 myqueue_server.o: myqueue_server.c
 	${CC} ${CFLAGS} -c myqueue_server.c -o myqueue_server.o

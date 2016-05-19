@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
    }
    
-   /* Message Queue oeffnen */
+   /* Message Queue oeffnen von msgget */
    if( (msgid = msgget(KEY,PERM))==-1 )
    {
       /* error handling */
@@ -32,5 +32,3 @@ int main(int argc, char* argv[])
    printf("Message sent: %s\n",msg.mText);
    return EXIT_SUCCESS;
 }
-
-
