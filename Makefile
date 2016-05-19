@@ -5,7 +5,10 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-all: myfifo mypipe mypopen myqueue_client myqueue_server
+all: testsignal myfifo mypipe mypopen myqueue_client myqueue_server
+
+testsignal: testsignal.o
+	${CC} ${CFLAGS} testsignal.o -o testsignal
 
 myfifo: myfifo.o
 	${CC} ${CFLAGS} myfifo.o -o myfifo
