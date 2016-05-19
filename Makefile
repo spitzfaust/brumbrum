@@ -3,7 +3,7 @@
 # d[ o_0 ]b
 
 CC=gcc
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -std=gnu11
 
 all: testsignal myfifo mypipe mypopen vehicleclient gridserver
 

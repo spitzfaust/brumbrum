@@ -5,10 +5,10 @@
 #include "rlutil.h"
 #include "autobahn.h"
 
-void myhandler(int sig)
+void handle_sig(int sig)
 {
    printf("CTRL+C (Sig Nr:%d)not ignored...\n",sig);
-   return EXIT_SUCCESS;
+   exit(sig);
 }
 
 
@@ -18,7 +18,7 @@ int main(int argc, char const* argv[]) {
   bool cont = true;
   int msgid = -1;
 
-  (void) signal(SIGINT,myhandler);
+  (void) signal(SIGINT, handle_sig);
 
   /* Argument Handling */
   if (argc != 2) {
