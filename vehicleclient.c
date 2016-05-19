@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <signal.h>
-
+#include <ctype.h>
 #include "rlutil.h"
 #include "autobahn.h"
 
@@ -22,8 +22,13 @@ int main(int argc, char const* argv[]) {
 
   /* Argument Handling */
   if (argc != 2) {
-    fprintf(stderr, "Usage: %s <CHAR>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <ID CHAR>\n", argv[0]);
     return EXIT_FAILURE;
+  }
+  client_id = argv[1][0];
+  if(!isupper(client_id)) {
+    fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n", argv[0]);
+    return EXIT_FAILURE;return EXIT_FAILURE;
   }
   // Message Queue oeffnen
   /*if ((msgid = msgget(KEY, PERM)) == -1) {
@@ -42,20 +47,22 @@ int main(int argc, char const* argv[]) {
     }*/
   saveDefaultColor();
   setColor(LIGHTBLUE);
-  printf("\nVehicleclient\n");
+  printf("\nWelcome to the Vehicleclient\n");
+  printf("\\ō͡≡o˞̶\n");
   printf("by Thomas Rauhofer\nand Tobias Watzek\n\n");
+  printf("Your ID is %c\n\n", client_id);
   resetColor();
   while (cont) {
+    printf("\u256D");
     setColor(LIGHTMAGENTA);
-    printf("Commands:\n");
+    printf(" Commands:\n");
     resetColor();
-    printf("<N> North\n");
-    printf("<E> East\n");
-    printf("<S> South\n");
-    printf("<W> West\n");
-    setColor(LIGHTRED);
-    printf("<T> Terminate\n");
-    resetColor();
+    printf("\u251C N North\n");
+    printf("\u251C E East\n");
+    printf("\u251C S South\n");
+    printf("\u251C W West\n");
+    printf("\u251C T Terminate\n");
+    printf("\u2570\u25B6 ");
     scanf(" %c", &command);
     switch (command) {
       case 'N':
