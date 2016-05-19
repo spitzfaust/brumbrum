@@ -5,6 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall -std=gnu11
 
+
 all: testsignal myfifo mypipe mypopen vehicleclient gridserver
 
 testsignal: testsignal.o
@@ -32,13 +33,11 @@ vehicleclient: vehicleclient.o
 	${CC} ${CFLAGS} vehicleclient.o -o vehicleclient
 
 
+
 gridserver: gridserver.o
 	${CC} ${CFLAGS} gridserver.o -o gridserver
-
-myqueue_server.o: myqueue_server.c
-	${CC} ${CFLAGS} -c myqueue_server.c -o myqueue_server.o
-
 
 .PHONY: clean
 clean:
 	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver testsignal
+

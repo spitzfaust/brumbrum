@@ -17,7 +17,7 @@ typedef struct
 
 typedef struct
 {
+  char client_id;
 	int x;
   int y;
 } position;
-
