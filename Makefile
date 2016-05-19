@@ -3,7 +3,7 @@
 # d[ o_0 ]b
 
 CC=gcc
-CFLAGS=-g -Wall -std=c11
+CFLAGS=-g -Wall
 
 all: myfifo mypipe mypopen myqueue_client myqueue_server
 
