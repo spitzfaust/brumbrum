@@ -1,4 +1,4 @@
-#include "myqueue.h"
+#include "autobahn.h"
 
 int main(int argc, char* argv[])
 {
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
       printf("Message received: %s\n",msg.mText);
-      
+
       /* sends message to griddisplay*//*
       if (msgsnd(msgid,&msg,sizeof(msg)-sizeof(long), 0) == -1)
       {

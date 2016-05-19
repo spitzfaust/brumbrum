@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-all: testsignal myfifo mypipe mypopen myqueue_client gridserver
+all: testsignal myfifo mypipe mypopen vehicleclient gridserver
 
 testsignal: testsignal.o
 	${CC} ${CFLAGS} testsignal.o -o testsignal
@@ -28,11 +28,9 @@ mypopen: mypopen.o
 mypopen.o: mypopen.c
 	${CC} ${CFLAGS} -c mypopen.c -o mypopen.o
 
-myqueue_client: myqueue_client.o
-	${CC} ${CFLAGS} myqueue_client.o -o myqueue_client
+vehicleclient: vehicleclient.o
+	${CC} ${CFLAGS} vehicleclient.o -o vehicleclient
 
-myqueue_client.o: myqueue_client.c
-	${CC} ${CFLAGS} -c myqueue_client.c -o myqueue_client.o
 
 gridserver: gridserver.o
 	${CC} ${CFLAGS} gridserver.o -o gridserver
@@ -43,4 +41,4 @@ myqueue_server.o: myqueue_server.c
 
 .PHONY: clean
 clean:
-	rm -f *.o myfifo mypipe mypopen myqueue_client myqueue_server
+	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver testsignal
