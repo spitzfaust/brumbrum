@@ -3,6 +3,44 @@
 #include "autobahn.h"
 #include "rlutil.h"
 
+int on_board(char id, char grid[], int size){
+  for(int i = 0; i < size; ++i ){
+    if(grid[i] == id){
+      return 1;
+    }
+  }
+  return 0;
+}
+/* returns value for movin in 1D array */
+int dir_check(char dir, char grid[], int width){
+  if(dir == 'N'){
+    return (-width);
+  }else if(dir == 'E'){
+    return 1;
+  }else if(dir == 'S'){
+    return width;
+  }else{
+    return -1;
+  }
+}
+/* returns 1 if move is possible without crash, 2 if move is of grid
+   and 0 if move results in crash*/
+int move(char id, char dir, char grid[], int width, int size){
+  for(int i = 0; i < size; ++i ){
+    if(grid[i] == id){
+      if(i+dir_check(dir, grid, width) < 0 || i+dir_check(dir, grid, width) > size){
+        return 0;
+      }
+      if(grid[i + dir_check(dir, grid, width)]!=' '){
+        return 1;
+      }else{
+        return 2;
+      }
+    }
+  }
+  return 3;
+}
+
 int main(int argc, char* argv[]){
   int height = 0;
   int width = 0;
@@ -14,25 +52,16 @@ int main(int argc, char* argv[]){
     height = atoi((argv[2]));
     width = atoi(argv[4]);
   }
-  int size = (width + 1) * (height + 1);
+  int size = width * height;
 
   char *grid;
   grid = (char *) malloc( (size) * sizeof(char) );
- /* the board is written */
+  /* the board is written */
   for(int i = 0; i < size; ++i){
-    if((i % (width + 1)) == 0){
-      grid[i] = 'r';
-    }else{
-      grid[i] = ' ';
-    }
+    grid[i] = ' ';
+
   }
-  for(int i = size - (width + 1); i < size +1; ++i){
-    if(i == size - (width +1) ){
-      grid[i] = 'O';
-    }else{
-      grid[i] = 'c';
-    }
-  }
+
   /*
   for(int y = 0; y <= height; ++y){
     for(int x = 0; x <= width; ++x){
@@ -42,9 +71,9 @@ int main(int argc, char* argv[]){
   }
   */
 
-  navigation navi[27];	 /* Buffer fuer navigation am grid */
+  	 /* Buffer fuer navigation am grid */
   navigation msg;
-  navi[26].client_id = '0';
+
   int msgid = -1;	 /* Message Queue ID */
 
   /* Message Queue neu anlegen */
@@ -62,8 +91,63 @@ int main(int argc, char* argv[]){
       fprintf(stderr,"%s: Can't receive from message queue\n",argv[0]);
       return EXIT_FAILURE;
     }
-    printf("Message received: Client ID:%c Client direction:%c\n", msg.client_id , msg .direction);
-    msg[msg.client_id-'A'] = msg.direction;
+    printf("Message received: Client ID: %c Client direction: %c \nasd", msg.client_id , msg.direction);
+    printf("I reach here");
+    if(on_board(msg.client_id, grid, size)){
+      printf("Already on grid\n");
+      /* crash */
+      if(move(msg.client_id, msg.direction, grid, width, size) == 0){
+        /* Client is found on grid */
+        for(int i = 0; i < size; ++i){
+          if(grid[i] == msg.client_id){
+            printf("A crash occoured! %c and %c where destroyed!\n", grid[i],grid[i+dir_check(msg.direction, grid, width)]);
+            grid[i] = ' ';
+            grid[i+dir_check(msg.direction, grid, width)] = ' ';
+          }
+        }
+      /* move without crash */
+      }else if(move(msg.client_id, msg.direction, grid, width, size) == 1){
+      /* Client is found on grid */
+        for(int i = 0; i < size; ++i){
+          if(grid[i] == msg.client_id){
+            printf("%c moved in the direction of %c \n",msg.client_id, msg.direction);
+            grid[i+dir_check(msg.direction, grid, width)] = msg.client_id;
+          }
+        }
+      }else if(move(msg.client_id, msg.direction, grid, width, size) == 2){
+        /* Client is found on grid */
+        for(int i = 0; i < size; ++i){
+          if(grid[i] == msg.client_id){
+            printf("%c moved of board and was destroyed!\n", msg.client_id);
+            grid[i] = ' ';
+          }
+        }
+      }
+    }else{
+      printf("New\n");
+      for(int i = 0; i < size; ++i ){
+        if(grid[i]==' '){
+          grid[i] = msg.client_id;
+          break;
+        }
+      }
+    }
+    /* print the board */
+    for(int i = 0;i<width; ++i){
+      printf("-");
+    }
+    printf("\n");
+    for(int y = 0; y < height; ++y){
+      for(int x = 0; x < width; ++x){
+        printf("%c", grid[y * (width+1) + x]);
+      }
+      printf("\n");
+    }
+    for(int i = 0;i<width; ++i){
+      printf("-");
+    }
+    printf("\n");
+    /* till here */
   }
     /* sends message to griddisplay*//*
     if (msgsnd(msgid,&msg,sizeof(msg)-sizeof(long), 0) == -1)
