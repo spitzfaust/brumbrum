@@ -5,7 +5,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
-all: testsignal myfifo mypipe mypopen  gridserver
+all: testsignal myfifo mypipe mypopen  gridserver myqueue_client
 
 testsignal: testsignal.o
 	${CC} ${CFLAGS} testsignal.o -o testsignal
@@ -31,6 +31,8 @@ mypopen.o: mypopen.c
 gridserver: gridserver.o
 	${CC} ${CFLAGS} gridserver.o -o gridserver
 
+myqueue_client: myqueue_client.o
+	${CC} ${CFLAGS} myqueue_client.o -o myqueue_client
 .PHONY: clean
 clean:
-	rm -f *.o myfifo mypipe mypopen  gridserver
+	rm -f *.o myfifo mypipe mypopen gridserver myqueue_client

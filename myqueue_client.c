@@ -1,4 +1,3 @@
-#include "myqueue.h"
 #include "autobahn.h"
 #include "rlutil.h"
 
@@ -7,8 +6,7 @@ int main(int argc, char* argv[]){
    int msgid = -1;	/* Message Queue ID */
 
    /* Argument Handling */
-   if (argc!=2)
-   {
+   if (argc!=2)   {
       fprintf(stderr,"Usage: %s <Message>\n",argv[0]);
       return EXIT_FAILURE;
    }
@@ -16,7 +14,7 @@ int main(int argc, char* argv[]){
    /* Message Queue oeffnen von msgget */
    if( (msgid = msgget(KEY,PERM))==-1 ){
       /* error handling */
-      fprintf(stderr,"%s: Can't access message queue\n",argv[0]);
+      fprintf(stderr,"%s: Can't access message queueueueueueue\n",argv[0]);
       return EXIT_FAILURE;
    }
 
@@ -24,13 +22,12 @@ int main(int argc, char* argv[]){
    msg.client_id = 'A';
    msg.direction = 'N';
    //strncpy(msg.mText,argv[1],MAX_DATA);
-   if (msgsnd(msgid,&msg,sizeof(msg), 0) == -1)
-   {
+   if (msgsnd(msgid,&msg,sizeof(msg), 0) == -1){
          /* error handling */
          fprintf(stderr,"%s: Can't send message\n",argv[0]);
          return EXIT_FAILURE;
    }
-   printf("Message sent: %s\n",msg.client_id);
-   msgctl(4224124242421, IPC_RMID, NULL);
+   printf("Message sent: %c\n",msg.client_id);
+   //msgctl(4224124242421, IPC_RMID, NULL);
    return EXIT_SUCCESS;
 }

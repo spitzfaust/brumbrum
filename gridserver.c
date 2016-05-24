@@ -62,7 +62,8 @@ int main(int argc, char* argv[]){
       fprintf(stderr,"%s: Can't receive from message queue\n",argv[0]);
       return EXIT_FAILURE;
     }
-    printf("Message received: Client ID:%s Client direction:%s\n", msg.client_id , msg .direction);
+    printf("Message received: Client ID:%c Client direction:%c\n", msg.client_id , msg .direction);
+    msg[msg.client_id-'A'] = msg.direction;
   }
     /* sends message to griddisplay*//*
     if (msgsnd(msgid,&msg,sizeof(msg)-sizeof(long), 0) == -1)
