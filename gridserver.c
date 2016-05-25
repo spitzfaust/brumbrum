@@ -4,6 +4,7 @@
 #include "rlutil.h"
 
 int on_board(char id, char grid[], int size){
+  printf("I reach the board\n");
   for(int i = 0; i < size; ++i ){
     if(grid[i] == id){
       return 1;
@@ -24,7 +25,7 @@ int dir_check(char dir, char grid[], int width){
   }
 }
 /* returns 1 if move is possible without crash, 2 if move is of grid
-   and 0 if move results in crash*/
+   and 0 if move results in crash */
 int move(char id, char dir, char grid[], int width, int size){
   for(int i = 0; i < size; ++i ){
     if(grid[i] == id){
@@ -91,15 +92,27 @@ int main(int argc, char* argv[]){
       fprintf(stderr,"%s: Can't receive from message queue\n",argv[0]);
       return EXIT_FAILURE;
     }
-    printf("Message received: Client ID: %c Client direction: %c \nasd", msg.client_id , msg.direction);
-    printf("I reach here");
-    if(on_board(msg.client_id, grid, size)){
+
+    printf("Message received: Client ID: %c Client direction: %c\n", msg.client_id , msg.direction);
+    printf("I reach here 1  \n");
+
+    if(on_board(msg.client_id, grid, size) && msg.direction == 'T'){
+      for(int i = 0; i < size; ++i){
+        if(grid[i] == msg.client_id){
+          printf("I reach here 1a  \n");
+          printf("%c was terminated by User\n", msg.direction);
+          grid[i] = ' ';
+          grid[i+dir_check(msg.direction, grid, width)] = ' ';
+        }
+      }
+    }else if(on_board(msg.client_id, grid, size){
       printf("Already on grid\n");
-      /* crash */
+      /* move with crash */
       if(move(msg.client_id, msg.direction, grid, width, size) == 0){
         /* Client is found on grid */
         for(int i = 0; i < size; ++i){
           if(grid[i] == msg.client_id){
+            printf("I reach here 2  \n");
             printf("A crash occoured! %c and %c where destroyed!\n", grid[i],grid[i+dir_check(msg.direction, grid, width)]);
             grid[i] = ' ';
             grid[i+dir_check(msg.direction, grid, width)] = ' ';
@@ -110,6 +123,7 @@ int main(int argc, char* argv[]){
       /* Client is found on grid */
         for(int i = 0; i < size; ++i){
           if(grid[i] == msg.client_id){
+            printf("I reach here 3  \n");
             printf("%c moved in the direction of %c \n",msg.client_id, msg.direction);
             grid[i+dir_check(msg.direction, grid, width)] = msg.client_id;
           }
@@ -118,16 +132,20 @@ int main(int argc, char* argv[]){
         /* Client is found on grid */
         for(int i = 0; i < size; ++i){
           if(grid[i] == msg.client_id){
+            printf("I reach here 4  \n");
             printf("%c moved of board and was destroyed!\n", msg.client_id);
             grid[i] = ' ';
           }
         }
       }
     }else{
+      fflush(stdout);
       printf("New\n");
       for(int i = 0; i < size; ++i ){
         if(grid[i]==' '){
+          printf("I reach here 5  \n");
           grid[i] = msg.client_id;
+          printf("I reach here 6  \n");
           break;
         }
       }
