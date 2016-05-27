@@ -10,11 +10,32 @@ void handle_sig(int sig) {
   exit(sig);
 }
 
+char* dirIDtoStr(char id) {
+  switch (id) {
+    case 'N':
+      return "north";
+      break;
+    case 'E':
+      return "east";
+      break;
+    case 'S':
+      return "south";
+      break;
+    case 'W':
+      return "west";
+      break;
+    default:
+      return "somewhere";
+      break;
+  }
+}
+
 int main(int argc, char const* argv[]) {
   char client_id = '0';
   char command = '0';
   bool cont = true;
   int msgid = -1;
+  navigation msg;
 
   (void)signal(SIGINT, handle_sig);
 
@@ -30,21 +51,13 @@ int main(int argc, char const* argv[]) {
     return EXIT_FAILURE;
     return EXIT_FAILURE;
   }
-  // Message Queue oeffnen
-  /*if ((msgid = msgget(KEY, PERM)) == -1) {
-    // error handling
-    fprintf(stderr, "%s: Can't access message queue\n", argv[0]);
+  msg.client_id = client_id;
+  /* Message Queue oeffnen von msgget */
+  if ((msgid = msgget(KEY, PERM)) == -1) {
+    /* error handling */
+    fprintf(stderr, "%s: Can't access message queueueueueueue\n", argv[0]);
     return EXIT_FAILURE;
-  }*/
-  /*
-    Nachricht verschicken
-    msg.mType = 1;
-    strncpy(msg.mText, argv[1], MAX_DATA);
-    if (msgsnd(msgid, &msg, sizeof(msg) - sizeof(long), 0) == -1) {
-       error handling
-      fprintf(stderr, "%s: Can't send message\n", argv[0]);
-      return EXIT_FAILURE;
-    }*/
+  }
   saveDefaultColor();
   setColor(LIGHTBLUE);
   printf("\nWelcome to the Vehicleclient\n");
@@ -64,26 +77,21 @@ int main(int argc, char const* argv[]) {
     printf("\u251C T Terminate\n");
     printf("\u2570\u25B6 ");
     scanf(" %c", &command);
-    switch (command) {
-      case 'N':
-        printf("North\n");
-        break;
-      case 'E':
-        printf("East\n");
-        break;
-      case 'S':
-        printf("South\n");
-        break;
-      case 'W':
-        printf("West\n");
-        break;
-      case 'T':
-        printf("Term\n");
+    if (command == 'N' || command == 'E' || command == 'S' || command == 'W' ||
+        command == 'T') {
+      msg.direction = command;
+      if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
+        /* error handling */
+        fprintf(stderr, "%s: Can't send message\n", argv[0]);
+        return EXIT_FAILURE;
+      }
+      if (command == 'T') {
         cont = false;
-        break;
-      default:
-        printf("Command not found.\n");
-        break;
+      } else {
+        printf("%c navigated %s\n", msg.client_id, dirIDtoStr(msg.direction));
+      }
+    } else {
+      printf("Command not found.\n");
     }
   }
   // printf("Message sent: %s\n", msg.mText);
