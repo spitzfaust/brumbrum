@@ -5,12 +5,10 @@
 #include "rlutil.h"
 #include "autobahn.h"
 
-void handle_sig(int sig)
-{
-   printf("CTRL+C (Sig Nr:%d)not ignored...\n",sig);
-   exit(sig);
+void handle_sig(int sig) {
+  printf("CTRL+C (Sig Nr:%d)not ignored...\n", sig);
+  exit(sig);
 }
-
 
 int main(int argc, char const* argv[]) {
   char client_id = '0';
@@ -18,7 +16,7 @@ int main(int argc, char const* argv[]) {
   bool cont = true;
   int msgid = -1;
 
-  (void) signal(SIGINT, handle_sig);
+  (void)signal(SIGINT, handle_sig);
 
   /* Argument Handling */
   if (argc != 2) {
@@ -26,9 +24,11 @@ int main(int argc, char const* argv[]) {
     return EXIT_FAILURE;
   }
   client_id = argv[1][0];
-  if(!isupper(client_id)) {
-    fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n", argv[0]);
-    return EXIT_FAILURE;return EXIT_FAILURE;
+  if (!isupper(client_id)) {
+    fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n",
+            argv[0]);
+    return EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
   // Message Queue oeffnen
   /*if ((msgid = msgget(KEY, PERM)) == -1) {
