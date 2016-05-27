@@ -151,7 +151,8 @@ int main(int argc, char* argv[]){
           }
         }
       }
-    }else{
+    /* 'i' initializes a client */
+    }else if(msg.direction == 'i'){
       fflush(stdout);
       printf("New\n");
       for(int i = 0; i < size; ++i ){
