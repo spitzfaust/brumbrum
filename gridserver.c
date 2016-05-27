@@ -44,20 +44,22 @@ int move(char id, char dir, char grid[], int width, int size){
 }
 
 int main(int argc, char* argv[]){
-  if(argc != 5){
-    printf("Please enter values for size of grid like this:\n");
-    printf("./gridserver -x 10 -x 5\n");
-    return 0;
-  }
   int height = 0;
   int width = 0;
-  if((strcmp(argv[1], "-x") == 0) && (strcmp(argv[3], "-y") == 0)){
-    height = atoi((argv[4]));
-    width = atoi(argv[2]);
+  if(argc != 5){
+    height = 10;
+    width = 10;
+    printf("No correct input was made. The grid size was chosen at 10 x 10\n");
+    printf("Correct inputlooks like this: ./gridserver -x 10 -y 10\n");
+  }else{
+    if((strcmp(argv[1], "-x") == 0) && (strcmp(argv[3], "-y") == 0)){
+      height = atoi((argv[4]));
+      width = atoi(argv[2]);
 
-  }else if((strcmp(argv[3], "-x") == 0) && (strcmp(argv[1], "-y") == 0)){
-    height = atoi((argv[2]));
-    width = atoi(argv[4]);
+    }else if((strcmp(argv[3], "-x") == 0) && (strcmp(argv[1], "-y") == 0)){
+      height = atoi((argv[2]));
+      width = atoi(argv[4]);
+    }
   }
   int size = (width + 2) * (height + 2);
 
