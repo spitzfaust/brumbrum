@@ -52,10 +52,16 @@ int main(int argc, char const* argv[]) {
     return EXIT_FAILURE;
   }
   msg.client_id = client_id;
+  msg.direction = 'i';
   /* Message Queue oeffnen von msgget */
   if ((msgid = msgget(KEY, PERM)) == -1) {
     /* error handling */
-    fprintf(stderr, "%s: Can't access message queueueueueueue\n", argv[0]);
+    fprintf(stderr, "%s: Can't access message queue\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
+    /* error handling */
+    fprintf(stderr, "%s: Can't send discovery message\n", argv[0]);
     return EXIT_FAILURE;
   }
   saveDefaultColor();
@@ -82,11 +88,12 @@ int main(int argc, char const* argv[]) {
       msg.direction = command;
       if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
         /* error handling */
-        fprintf(stderr, "%s: Can't send message\n", argv[0]);
+        fprintf(stderr, "%s: Can't send command\n", argv[0]);
         return EXIT_FAILURE;
       }
       if (command == 'T') {
         cont = false;
+        printf("Terminated the vehicle %c.\n", msg.client_id);
       } else {
         printf("%c navigated %s\n", msg.client_id, dirIDtoStr(msg.direction));
       }
