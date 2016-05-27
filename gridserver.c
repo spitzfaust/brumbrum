@@ -14,11 +14,11 @@ int on_board(char id, char grid[], int size){
 /* returns value for movin in 1D array */
 int dir_check(char dir, char grid[], int width){
   if(dir == 'N'){
-    return (-width);
+    return (-(width + 2));
   }else if(dir == 'E'){
     return 1;
   }else if(dir == 'S'){
-    return width;
+    return (width + 2);
   }else if (dir == 'W'){
     return -1;
   }else{
@@ -44,6 +44,11 @@ int move(char id, char dir, char grid[], int width, int size){
 }
 
 int main(int argc, char* argv[]){
+  if(argc != 5){
+    printf("Please enter values for size of grid like this:\n");
+    printf("./gridserver -x 10 -x 5\n");
+    return 0;
+  }
   int height = 0;
   int width = 0;
   if((strcmp(argv[1], "-x") == 0) && (strcmp(argv[3], "-y") == 0)){
