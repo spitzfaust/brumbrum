@@ -6,7 +6,7 @@ int main(int argc, char* argv[]){
    int msgid = -1;	/* Message Queue ID */
 
    /* Argument Handling */
-   if (argc!=2)   {
+   if (argc!=3)   {
       fprintf(stderr,"Usage: %s <Message>\n",argv[0]);
       return EXIT_FAILURE;
    }
@@ -19,8 +19,8 @@ int main(int argc, char* argv[]){
    }
 
    /* Nachricht verschicken */
-   msg.client_id = 'A';
-   msg.direction = 'N';
+   msg.client_id = argv[1][0];
+   msg.direction = argv[2][0];
    //strncpy(msg.mText,argv[1],MAX_DATA);
    if (msgsnd(msgid,&msg,sizeof(msg), 0) == -1){
          /* error handling */
