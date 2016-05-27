@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     height = 10;
     width = 10;
     printf("No correct input was made. The grid size was chosen at 10 x 10\n");
-    printf("Correct inputlooks like this: ./gridserver -x 10 -y 10\n");
+    printf("Correct inputlooks like this: \"./gridserver -x 10 -y 10\"\n");
   }else{
     if((strcmp(argv[1], "-x") == 0) && (strcmp(argv[3], "-y") == 0)){
       height = atoi((argv[4]));
@@ -162,18 +162,12 @@ int main(int argc, char* argv[]){
       }
     }
     /* print the board */
-    for(int i = 0;i<width + 2; ++i){
-      printf("-");
-    }
     printf("\n");
     for(int y = 0; y < height + 2; ++y){
       for(int x = 0; x < width + 2; ++x){
         printf("%c", grid[y * (width + 2) + x]);
       }
       printf("\n");
-    }
-    for(int i = 0;i<width + 2; ++i){
-      printf("-");
     }
     printf("\n");
     /* till here */
