@@ -30,7 +30,6 @@
 CC=gcc
 CFLAGS=-g -Wall -std=gnu11
 
-
 all: testsignal myfifo mypipe mypopen vehicleclient gridserver
 
 testsignal: testsignal.o
@@ -65,4 +64,3 @@ gridserver: gridserver.o
 .PHONY: clean
 clean:
 	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver testsignal
-
