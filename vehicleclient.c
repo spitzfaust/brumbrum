@@ -35,7 +35,9 @@ int main(int argc, char const* argv[]) {
   char command = '0';
   bool cont = true;
   int msgid = -1;
+  long my_pid = (long)getpid();
   navigation msg;
+  position init_pos;
 
   (void)signal(SIGINT, handle_sig);
 
@@ -44,18 +46,19 @@ int main(int argc, char const* argv[]) {
     fprintf(stderr, "Usage: %s <ID CHAR>\n", argv[0]);
     return EXIT_FAILURE;
   }
-  client_id = argv[1][0];
+  client_id = toupper(argv[1][0]);
   if (!isalpha(client_id)) {
     fprintf(stderr, "Error: %s You have to use a letter as ID\n",
             argv[0]);
     return EXIT_FAILURE;
   }
-  client_id = toupper(client_id);
   if (!isupper(client_id)) {
     fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n",
             argv[0]);
     return EXIT_FAILURE;
   }
+  msg.msg_to = SERVER;
+  msg.msg_from = my_pid;
   msg.client_id = client_id;
   msg.direction = 'i';
   /* Message Queue oeffnen von msgget */
@@ -69,12 +72,20 @@ int main(int argc, char const* argv[]) {
     fprintf(stderr, "%s: Can't send discovery message\n", argv[0]);
     return EXIT_FAILURE;
   }
+  if (msgrcv(msgid, &init_pos, sizeof(init_pos), my_pid, 0) == -1) {
+    // error handling
+    fprintf(stderr, "%s: Can't receive initial position from message queue\n", argv[0]);
+    return EXIT_FAILURE;
+  }
   saveDefaultColor();
   setColor(LIGHTBLUE);
   printf("\nWelcome to the Vehicleclient\n");
   printf("\\ō͡≡o˞̶\n");
   printf("by Thomas Rauhofer\nand Tobias Watzek\n\n");
   printf("Your ID is %c\n\n", client_id);
+  printf("Your vehicle is parked at:\n");
+  printf("x: %d\n", init_pos.x);
+  printf("y: %d\n", init_pos.y);
   resetColor();
   while (cont) {
     printf("\u256D");
@@ -106,6 +117,5 @@ int main(int argc, char const* argv[]) {
       printf("Command not found.\n");
     }
   }
-  // printf("Message sent: %s\n", msg.mText);
   return EXIT_SUCCESS;
 }
