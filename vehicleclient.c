@@ -45,10 +45,15 @@ int main(int argc, char const* argv[]) {
     return EXIT_FAILURE;
   }
   client_id = argv[1][0];
+  if (!isalpha(client_id)) {
+    fprintf(stderr, "Error: %s You have to use a letter as ID\n",
+            argv[0]);
+    return EXIT_FAILURE;
+  }
+  client_id = toupper(client_id);
   if (!isupper(client_id)) {
     fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n",
             argv[0]);
-    return EXIT_FAILURE;
     return EXIT_FAILURE;
   }
   msg.client_id = client_id;
