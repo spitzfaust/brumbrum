@@ -1,11 +1,11 @@
+#ifndef AUTOBAHN_H
+#define AUTOBAHN_H
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <fcntl.h>
 
 #define KEY 42		/* eindeutiger Key z.B. Matrikelnummer */
 #define PERM 0660
@@ -31,3 +31,5 @@ typedef struct{
   int y;
   int status;
 } position;
+
+#endif

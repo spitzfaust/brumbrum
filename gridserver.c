@@ -9,6 +9,7 @@
 char* grid = NULL;
 char * prog_name = NULL;
 int msgid = -1;
+long clients[26] = {};
 
 void sig_handler();
 bool on_board(char id, long clients[]);
@@ -34,7 +35,6 @@ int main(int argc, char* argv[]) {
   int size = 0;
   int height = 0;
   int width = 0;
-  long clients[26] = {};
   /* Buffer fuer navigation am grid */
   navigation msg;
   prog_name = (char*)malloc((strlen(argv[0]) + 1) * sizeof(char));
@@ -126,6 +126,7 @@ int main(int argc, char* argv[]) {
       for (int i = 0; i < size; ++i) {
         if (grid[i] == msg.client_id) {
           printf("%c was terminated by User\n", msg.client_id);
+          kill(clients[msg.client_id - 'A'], SIGTERM);
           clients[msg.client_id - 'A'] = 0;
           grid[i] = ' ';
           grid[i + dir_check(msg.direction, grid, width)] = ' ';
@@ -140,7 +141,9 @@ int main(int argc, char* argv[]) {
           if (grid[i] == msg.client_id) {
             printf("A crash occoured! %c and %c where destroyed!\n", grid[i],
                    grid[i + dir_check(msg.direction, grid, width)]);
+            kill(clients[grid[i] - 'A'], SIGTERM);
             clients[grid[i] - 'A'] = 0;
+            kill(clients[grid[i + dir_check(msg.direction, grid, width)] - 'A'], SIGTERM);
             clients[grid[i + dir_check(msg.direction, grid, width)] - 'A'] = 0;
             grid[i] = ' ';
             grid[i + dir_check(msg.direction, grid, width)] = ' ';
@@ -153,6 +156,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < size; ++i) {
           if (grid[i] == msg.client_id) {
             printf("%c moved of board and was destroyed!\n", msg.client_id);
+            kill(clients[grid[i] - 'A'], SIGTERM);
             clients[grid[i] - 'A'] = 0;
             grid[i] = ' ';
             break;
@@ -199,10 +203,16 @@ int main(int argc, char* argv[]) {
   return EXIT_SUCCESS;
 }
 void sig_handler() {
-  printf("Info %s: Exiting...\n", prog_name);
+  printf("\nInfo %s: Exiting...\n", prog_name);
   if(msgid != -1){
     printf("Info %s: Cleaning up the message queue...\n", prog_name);
     msgctl(msgid, IPC_RMID, (struct msqid_ds *) 0);
+  }
+  printf("Info %s: Killing Clients...\n", prog_name);
+  for(int i = 0; i < 26; ++i) {
+    if(clients[i] != 0) {
+      kill(clients[i], SIGTERM);
+    }
   }
   printf("Info %s: Freeing memory...\n", prog_name);
   free(grid);
