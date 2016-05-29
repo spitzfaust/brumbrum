@@ -5,7 +5,7 @@
 #include "rlutil.h"
 #include "autobahn.h"
 
-void handle_sig(int sig) {
+void handle_sigint(int sig) {
   printf("CTRL+C (Sig Nr:%d)not ignored...\n", sig);
   exit(sig);
 }
@@ -31,15 +31,15 @@ char* dirIDtoStr(char id) {
 }
 
 int main(int argc, char const* argv[]) {
+  (void)signal(SIGINT, handle_sigint);
   char client_id = '0';
   char command = '0';
   bool cont = true;
   int msgid = -1;
   long my_pid = (long)getpid();
+
   navigation msg;
   position init_pos;
-
-  (void)signal(SIGINT, handle_sig);
 
   /* Argument Handling */
   if (argc != 2) {
@@ -75,6 +75,14 @@ int main(int argc, char const* argv[]) {
   if (msgrcv(msgid, &init_pos, sizeof(init_pos), my_pid, 0) == -1) {
     // error handling
     fprintf(stderr, "%s: Can't receive initial position from message queue\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  if(init_pos.status == REG_FULL){
+    fprintf(stderr, "%s: The grid is full.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  if(init_pos.status == REG_DOUBLE){
+    fprintf(stderr, "%s: The ID %c is allready in use.\n", argv[0], client_id);
     return EXIT_FAILURE;
   }
   saveDefaultColor();
