@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
   }
-  display = open(PIPE_DISPLAY, O_WRONLY);
+  display = open(PIPE_DISPLAY, O_RDWR);
   size = (width + 2) * (height + 2);
   grid = (char*)malloc((size) * sizeof(char));
   output = (char*)malloc((size + height + 5) * sizeof(char));
@@ -191,9 +191,7 @@ int main(int argc, char* argv[]) {
         }
       }
     }
-    //TODO Write into string or something to hand to fifo
     /* print the board */
-
     output[0] = '\n';
     int size_count = 1;
     for (int y = 0; y < height + 2; ++y) {
@@ -206,7 +204,11 @@ int main(int argc, char* argv[]) {
     }
     output[size_count] = '\n';
     output[size_count + 1] = '\0';
-    write(display, output, strlen(output));
+    if (write(display, output, strlen(output)) == -1){
+      fprintf(stderr, "Warning %s: Can't write to display\n", prog_name);
+      cleanup();
+      return EXIT_FAILURE;
+    }
     /* till here */
   }
   cleanup();
@@ -227,6 +229,7 @@ void cleanup() {
   }
   printf("Info %s: Closing the fifo...\n", prog_name);
   close(display);
+  remove(PIPE_DISPLAY);
   printf("Info %s: Freeing memory...\n", prog_name);
   free(grid);
   free(prog_name);
