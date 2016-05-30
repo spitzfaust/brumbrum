@@ -46,7 +46,7 @@ int main(int argc, char const* argv[]) {
   msg.msg_to = SERVER;
   msg.msg_from = my_pid;
   msg.client_id = client_id;
-  msg.direction = 'i';
+  msg.command = 'i';
   /* Message Queue oeffnen von msgget */
   if ((msgid = msgget(KEY, PERM)) == -1) {
     /* error handling */
@@ -98,14 +98,14 @@ int main(int argc, char const* argv[]) {
     command = toupper(command);
     if (command == 'N' || command == 'E' || command == 'S' || command == 'W' ||
         command == 'T') {
-      msg.direction = command;
+      msg.command = command;
       if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
         /* error handling */
         fprintf(stderr, "%s: Can't send command\n", prog_name);
         return EXIT_FAILURE;
       }
       if (command != 'T') {
-        printf("%c navigated %s\n", msg.client_id, dirIDtoStr(msg.direction));
+        printf("%c navigated %s\n", msg.client_id, dirIDtoStr(msg.command));
       }
     } else {
       printf("Command not found.\n");
@@ -127,7 +127,7 @@ void handle_sigint(int sig) {
       msg.msg_to = SERVER;
       msg.msg_from = (long)getpid();
       msg.client_id = client_id;
-      msg.direction = 'T';
+      msg.command = 'T';
       if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
         /* error handling */
         fprintf(stderr, "%s: Can't send command\n", prog_name);

@@ -30,37 +30,29 @@
 CC=gcc
 CFLAGS=-g -Wall -std=gnu11
 
-all: testsignal myfifo mypipe mypopen vehicleclient gridserver
+all: testsignal myfifo mypipe mypopen vehicleclient gridserver griddisplay
 
-testsignal: testsignal.o
-	${CC} ${CFLAGS} testsignal.o -o testsignal
+testsignal: testsignal.c
+	${CC} ${CFLAGS} testsignal.c -o testsignal
 
-myfifo: myfifo.o
-	${CC} ${CFLAGS} myfifo.o -o myfifo
+myfifo: myfifo.c
+	${CC} ${CFLAGS} myfifo.c -o myfifo
 
-myfifo.o: myfifo.c
-	${CC} ${CFLAGS} -c myfifo.c -o myfifo.o
+mypipe: mypipe.c
+	${CC} ${CFLAGS}  mypipe.c -o mypipe
 
-mypipe: mypipe.o
-	${CC} ${CFLAGS} mypipe.o -o mypipe
+mypopen: mypopen.c
+	${CC} ${CFLAGS} mypopen.c -o mypopen
 
-mypipe.o: mypipe.c
-	${CC} ${CFLAGS} -c mypipe.c -o mypipe.o
+vehicleclient: vehicleclient.c
+	${CC} ${CFLAGS} vehicleclient.c -o vehicleclient
 
-mypopen: mypopen.o
-	${CC} ${CFLAGS} mypopen.o -o mypopen
+gridserver: gridserver.c
+	${CC} ${CFLAGS} gridserver.c -o gridserver
 
-mypopen.o: mypopen.c
-	${CC} ${CFLAGS} -c mypopen.c -o mypopen.o
-
-vehicleclient: vehicleclient.o
-	${CC} ${CFLAGS} vehicleclient.o -o vehicleclient
-
-
-
-gridserver: gridserver.o
-	${CC} ${CFLAGS} gridserver.o -o gridserver
+griddisplay: griddisplay.c
+	${CC} ${CFLAGS} griddisplay.c -o griddisplay
 
 .PHONY: clean
 clean:
-	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver testsignal
+	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver griddisplay testsignal

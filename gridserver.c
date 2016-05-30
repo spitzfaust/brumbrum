@@ -1,5 +1,8 @@
 #include <string.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "autobahn.h"
 #include "rlutil.h"
 
@@ -7,11 +10,14 @@
  * Ugly globals but thats the only way that signalhandling can do its work:
  */
 char* grid = NULL;
-char * prog_name = NULL;
+char* prog_name = NULL;
 int msgid = -1;
 long clients[26] = {};
+char * output = NULL;
+int display = -1;
 
 void sig_handler();
+void cleanup();
 bool on_board(char id, long clients[]);
 /* returns value for movin in 1D array */
 int dir_check(char dir, char grid[], int width);
@@ -21,17 +27,18 @@ int move(char id, char dir, char grid[], int width, int size);
 
 int main(int argc, char* argv[]) {
   struct sigaction my_action;
+  struct stat st;
   my_action.sa_handler = sig_handler;
   my_action.sa_flags = SA_RESTART;
   sigemptyset(&my_action.sa_mask);
-  sigaction (SIGSEGV, &my_action, NULL);
-  sigaction (SIGBUS, &my_action, NULL);
-  sigaction (SIGABRT, &my_action, NULL);
-  sigaction (SIGPIPE, &my_action, NULL);
-  sigaction (SIGINT, &my_action, NULL);
-  sigaction (SIGILL, &my_action, NULL);
-  sigaction (SIGTERM, &my_action, NULL);
-  sigaction (SIGHUP, &my_action, NULL);
+  sigaction(SIGSEGV, &my_action, NULL);
+  sigaction(SIGBUS, &my_action, NULL);
+  sigaction(SIGABRT, &my_action, NULL);
+  sigaction(SIGPIPE, &my_action, NULL);
+  sigaction(SIGINT, &my_action, NULL);
+  sigaction(SIGILL, &my_action, NULL);
+  sigaction(SIGTERM, &my_action, NULL);
+  sigaction(SIGHUP, &my_action, NULL);
   int size = 0;
   int height = 0;
   int width = 0;
@@ -39,8 +46,6 @@ int main(int argc, char* argv[]) {
   navigation msg;
   prog_name = (char*)malloc((strlen(argv[0]) + 1) * sizeof(char));
   strcpy(prog_name, argv[0]);
-
-
   if (argc != 5) {
     height = 10;
     width = 10;
@@ -60,11 +65,21 @@ int main(int argc, char* argv[]) {
           break;
         default:
           fprintf(stderr, "Error: %s No correct input was made.", prog_name);
+          cleanup();
           return EXIT_FAILURE;
       }
   }
+  if (stat(PIPE_DISPLAY, &st) != 0){
+    if (mkfifo(PIPE_DISPLAY, 0660) == -1) {
+      fprintf(stderr, "Error: %s can't create fifo.\n", prog_name);
+      cleanup();
+      return EXIT_FAILURE;
+    }
+  }
+  display = open(PIPE_DISPLAY, O_WRONLY);
   size = (width + 2) * (height + 2);
   grid = (char*)malloc((size) * sizeof(char));
+  output = (char*)malloc((size + height + 5) * sizeof(char));
   /* the board is written */
   for (int i = 0; i < size; ++i) {
     if (i < width + 2 || i > (size - (width + 2))) {
@@ -75,13 +90,11 @@ int main(int argc, char* argv[]) {
       grid[i] = ' ';
     }
   }
-
-
-
   /* Message Queue neu anlegen */
   if ((msgid = msgget(KEY, PERM | IPC_CREAT | IPC_EXCL)) == -1) {
     // error handling
     fprintf(stderr, "%s: Error creating message queue\n", prog_name);
+    cleanup();
     return EXIT_FAILURE;
   }
 
@@ -90,13 +103,14 @@ int main(int argc, char* argv[]) {
     if (msgrcv(msgid, &msg, sizeof(msg), SERVER, 0) == -1) {
       // error handling
       fprintf(stderr, "%s: Can't receive from message queue\n", prog_name);
+      cleanup();
       return EXIT_FAILURE;
     }
 
-    printf("Message received: Client ID: %c Client direction: %c\n",
-           msg.client_id, msg.direction);
+    printf("Message received: Client ID: %c Client command: %c\n",
+            msg.client_id, msg.command);
 
-    if (msg.direction == 'i') {
+    if (msg.command == 'i') {
       fflush(stdout);
       printf("New\n");
       position init_pos;
@@ -120,38 +134,40 @@ int main(int argc, char* argv[]) {
       }
       if (msgsnd(msgid, &init_pos, sizeof(init_pos), 0) == -1) {
         fprintf(stderr, "%s: Can't send position back to client\n", prog_name);
-        exit(-1);
+        cleanup();
+        exit(EXIT_FAILURE);
       }
-    } else if (on_board(msg.client_id, clients) && msg.direction == 'T') {
+    } else if (on_board(msg.client_id, clients) && msg.command == 'T') {
       for (int i = 0; i < size; ++i) {
         if (grid[i] == msg.client_id) {
           printf("%c was terminated by User\n", msg.client_id);
           kill(clients[msg.client_id - 'A'], SIGTERM);
           clients[msg.client_id - 'A'] = 0;
           grid[i] = ' ';
-          grid[i + dir_check(msg.direction, grid, width)] = ' ';
+          grid[i + dir_check(msg.command, grid, width)] = ' ';
         }
       }
     } else if (on_board(msg.client_id, clients)) {
       printf("Already on grid\n");
       /* move with crash */
-      if (move(msg.client_id, msg.direction, grid, width, size) == 0) {
+      if (move(msg.client_id, msg.command, grid, width, size) == 0) {
         /* Client is found on grid */
         for (int i = 0; i < size; ++i) {
           if (grid[i] == msg.client_id) {
             printf("A crash occoured! %c and %c where destroyed!\n", grid[i],
-                   grid[i + dir_check(msg.direction, grid, width)]);
+                   grid[i + dir_check(msg.command, grid, width)]);
             kill(clients[grid[i] - 'A'], SIGTERM);
             clients[grid[i] - 'A'] = 0;
-            kill(clients[grid[i + dir_check(msg.direction, grid, width)] - 'A'], SIGTERM);
-            clients[grid[i + dir_check(msg.direction, grid, width)] - 'A'] = 0;
+            kill(clients[grid[i + dir_check(msg.command, grid, width)] - 'A'],
+                 SIGTERM);
+            clients[grid[i + dir_check(msg.command, grid, width)] - 'A'] = 0;
             grid[i] = ' ';
-            grid[i + dir_check(msg.direction, grid, width)] = ' ';
+            grid[i + dir_check(msg.command, grid, width)] = ' ';
             break;
           }
         }
         /* move without crash */
-      } else if (move(msg.client_id, msg.direction, grid, width, size) == 2) {
+      } else if (move(msg.client_id, msg.command, grid, width, size) == 2) {
         /* Client is found on grid */
         for (int i = 0; i < size; ++i) {
           if (grid[i] == msg.client_id) {
@@ -162,61 +178,62 @@ int main(int argc, char* argv[]) {
             break;
           }
         }
-      } else if (move(msg.client_id, msg.direction, grid, width, size) == 1) {
+      } else if (move(msg.client_id, msg.command, grid, width, size) == 1) {
         /* Client is found on grid */
         for (int i = 0; i < size; ++i) {
           if (grid[i] == msg.client_id) {
             printf("%c moved in the direction of %c \n", msg.client_id,
-                   msg.direction);
-            grid[i + dir_check(msg.direction, grid, width)] = msg.client_id;
+                   msg.command);
+            grid[i + dir_check(msg.command, grid, width)] = msg.client_id;
             grid[i] = ' ';
             break;
           }
         }
       }
-      /* 'i' initializes a client */
     }
+    //TODO Write into string or something to hand to fifo
     /* print the board */
-    printf("\n");
+
+    output[0] = '\n';
+    int size_count = 1;
     for (int y = 0; y < height + 2; ++y) {
       for (int x = 0; x < width + 2; ++x) {
-        printf("%c", grid[y * (width + 2) + x]);
+        output[size_count] = grid[y * (width + 2) + x];
+        ++size_count;
       }
-      printf("\n");
+      output[size_count] = '\n';
+      ++size_count;
     }
-    printf("\n");
+    output[size_count] = '\n';
+    output[size_count + 1] = '\0';
+    write(display, output, strlen(output));
     /* till here */
   }
-  /* sends message to griddisplay*/ /*
-   if (msgsnd(msgid,&msg,sizeof(msg)-sizeof(long), 0) == -1)
-   {
-         // error handling
-         fprintf(stderr,"%s: Can't send message\n",prog_name);
-         return EXIT_FAILURE;
-   }
-   printf("Message sent: %s\n",msg.mText);
-
- }*/
-  // Das muss ausgeführt werden wenn der gridserver beendet wird!
-  // msgctl(msgid, IPC_RMID, (struct msqid_ds *) 0);
-  free(grid);
+  cleanup();
   return EXIT_SUCCESS;
 }
-void sig_handler() {
+
+void cleanup() {
   printf("\nInfo %s: Exiting...\n", prog_name);
-  if(msgid != -1){
+  if (msgid != -1) {
     printf("Info %s: Cleaning up the message queue...\n", prog_name);
-    msgctl(msgid, IPC_RMID, (struct msqid_ds *) 0);
+    msgctl(msgid, IPC_RMID, (struct msqid_ds*)0);
   }
   printf("Info %s: Killing Clients...\n", prog_name);
-  for(int i = 0; i < 26; ++i) {
-    if(clients[i] != 0) {
+  for (int i = 0; i < 26; ++i) {
+    if (clients[i] != 0) {
       kill(clients[i], SIGTERM);
     }
   }
+  printf("Info %s: Closing the fifo...\n", prog_name);
+  close(display);
   printf("Info %s: Freeing memory...\n", prog_name);
   free(grid);
   free(prog_name);
+  free(output);
+}
+void sig_handler() {
+  cleanup();
   exit(EXIT_SUCCESS);
 }
 bool on_board(char id, long clients[]) {
