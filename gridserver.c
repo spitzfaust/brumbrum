@@ -224,6 +224,7 @@ int main(int argc, char* argv[]) {
       }
     }
     /* print the board */
+    printf("-------------------------------\n");
     output[0] = '\n';
     int size_count = 1;
     for (int y = 0; y < height + 2; ++y) {
