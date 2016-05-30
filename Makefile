@@ -28,21 +28,9 @@
 # miK     `':::_:' -- '' -'-' `':_::::'`
 
 CC=gcc
-CFLAGS=-g -Wall -std=gnu11
+CFLAGS= -O3 -g -Wall -std=gnu11
 
-all: testsignal myfifo mypipe mypopen vehicleclient gridserver griddisplay
-
-testsignal: testsignal.c
-	${CC} ${CFLAGS} testsignal.c -o testsignal
-
-myfifo: myfifo.c
-	${CC} ${CFLAGS} myfifo.c -o myfifo
-
-mypipe: mypipe.c
-	${CC} ${CFLAGS}  mypipe.c -o mypipe
-
-mypopen: mypopen.c
-	${CC} ${CFLAGS} mypopen.c -o mypopen
+all: vehicleclient gridserver griddisplay
 
 vehicleclient: vehicleclient.c
 	${CC} ${CFLAGS} vehicleclient.c -o vehicleclient
@@ -55,4 +43,4 @@ griddisplay: griddisplay.c
 
 .PHONY: clean
 clean:
-	rm -f *.o myfifo mypipe mypopen vehicleclient gridserver griddisplay testsignal
+	rm -f *.o vehicleclient gridserver griddisplay

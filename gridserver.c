@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "autobahn.h"
-#include "rlutil.h"
+
 
 /**
  * Ugly globals but thats the only way that signalhandling can do its work:
@@ -13,7 +13,6 @@ char* grid = NULL;
 char* prog_name = NULL;
 int msgid = -1;
 long clients[26] = {};
-char * output = NULL;
 int display = -1;
 
 void sig_handler();
@@ -42,6 +41,7 @@ int main(int argc, char* argv[]) {
   int size = 0;
   int height = 0;
   int width = 0;
+  char output[PIPE_BUF] = "";
   /* Buffer fuer navigation am grid */
   navigation msg;
   prog_name = (char*)malloc((strlen(argv[0]) + 1) * sizeof(char));
@@ -49,10 +49,12 @@ int main(int argc, char* argv[]) {
   if (argc != 5) {
     height = 10;
     width = 10;
-    printf(
-        "Warning: %s No correct input was made. The grid size was chosen at 10 "
-        "x 10\nCorrect inputlooks like this: \"./gridserver -x 10 -y 10\"\n",
-        prog_name);
+    setBackgroundColor(BROWN);
+    printf("Warning: %s No correct input was made. The grid size was chosen at 10 x 10", prog_name);
+    clear_eol();
+    printf("Correct inputlooks like this: './gridserver -x 10 -y 10'");
+    clear_eol();
+    resetColor();
   } else {
     char c;
     while ((c = getopt(argc, argv, "x:y:")) != -1)
@@ -64,22 +66,24 @@ int main(int argc, char* argv[]) {
           height = atoi(optarg);
           break;
         default:
-          fprintf(stderr, "Error: %s No correct input was made.", prog_name);
+          setBackgroundColor(RED);
+          fprintf(stderr, BG_RED "Error: %s No correct input was made.", prog_name);
           cleanup();
+          resetColor();
           return EXIT_FAILURE;
       }
   }
-  if (stat(PIPE_DISPLAY, &st) != 0){
-    if (mkfifo(PIPE_DISPLAY, 0660) == -1) {
-      fprintf(stderr, "Error: %s can't create fifo.\n", prog_name);
-      cleanup();
-      return EXIT_FAILURE;
-    }
+  if(width <= 0 || height <= 0) {
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "Error %s: No correct input was made. Use positive dimensions.", prog_name);
+    cleanup();
+    resetColor();
+    return EXIT_FAILURE;
   }
-  display = open(PIPE_DISPLAY, O_RDWR);
+
   size = (width + 2) * (height + 2);
   grid = (char*)malloc((size) * sizeof(char));
-  output = (char*)malloc((size + height + 5) * sizeof(char));
+
   /* the board is written */
   for (int i = 0; i < size; ++i) {
     if (i < width + 2 || i > (size - (width + 2))) {
@@ -90,20 +94,41 @@ int main(int argc, char* argv[]) {
       grid[i] = ' ';
     }
   }
+  if (stat(PIPE_DISPLAY, &st) != 0){
+    if (mkfifo(PIPE_DISPLAY, 0660) == -1) {
+      setBackgroundColor(RED);
+      fprintf(stderr, BG_RED"Error %s: Can't create fifo.", prog_name);
+      clear_eol();
+      cleanup();
+      resetColor();
+      return EXIT_FAILURE;
+    }
+  }
+  display = open(PIPE_DISPLAY, O_RDWR);
   /* Message Queue neu anlegen */
   if ((msgid = msgget(KEY, PERM | IPC_CREAT | IPC_EXCL)) == -1) {
     // error handling
-    fprintf(stderr, "%s: Error creating message queue\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED"Error %s: Can't create message queue", prog_name);
+    clear_eol();
     cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
-
+  setColor(LIGHTBLUE);
+  printf("\nWelcome to the gridserver\n");
+  printf("\\ō͡≡o˞̶\n");
+  printf("by Thomas Rauhofer\nand Tobias Watzek\n\n");
+  resetColor();
   /* In einer Endlosschleife Nachrichten empfangen */
   while (1) {
     if (msgrcv(msgid, &msg, sizeof(msg), SERVER, 0) == -1) {
       // error handling
-      fprintf(stderr, "%s: Can't receive from message queue\n", prog_name);
+      setBackgroundColor(RED);
+      fprintf(stderr, BG_RED "Error %s: Can't receive from message queue", prog_name);
+      clear_eol();
       cleanup();
+      resetColor();
       return EXIT_FAILURE;
     }
 
@@ -125,16 +150,23 @@ int main(int argc, char* argv[]) {
           if (grid[i] == ' ') {
             grid[i] = msg.client_id;
             clients[msg.client_id - 'A'] = (long)msg.msg_from;
-            init_pos.x = i % width;
-            init_pos.y = i / width;
+            init_pos.x = i % (width + 2) - 1;
+            init_pos.y = i / (width + 2) - 1;
             init_pos.status = REG_OK;
+            printf("%c registration ok\n", msg.client_id);
             break;
           }
         }
+        if(init_pos.status == 0) {
+          init_pos.status = REG_FULL;
+        }
       }
       if (msgsnd(msgid, &init_pos, sizeof(init_pos), 0) == -1) {
-        fprintf(stderr, "%s: Can't send position back to client\n", prog_name);
+        setBackgroundColor(RED);
+        fprintf(stderr, BG_RED "Error %s: Can't send position back to client", prog_name);
+        clear_eol();
         cleanup();
+        resetColor();
         exit(EXIT_FAILURE);
       }
     } else if (on_board(msg.client_id, clients) && msg.command == 'T') {
@@ -205,8 +237,11 @@ int main(int argc, char* argv[]) {
     output[size_count] = '\n';
     output[size_count + 1] = '\0';
     if (write(display, output, strlen(output)) == -1){
-      fprintf(stderr, "Warning %s: Can't write to display\n", prog_name);
+      setBackgroundColor(RED);
+      fprintf(stderr, BG_RED "Error %s: Can't write to display\n", prog_name);
+      clear_eol();
       cleanup();
+      resetColor();
       return EXIT_FAILURE;
     }
     /* till here */
@@ -216,27 +251,35 @@ int main(int argc, char* argv[]) {
 }
 
 void cleanup() {
-  printf("\nInfo %s: Exiting...\n", prog_name);
+  clear_eol();
+  printf("Info %s: Exiting...", prog_name);
+  clear_eol();
   if (msgid != -1) {
-    printf("Info %s: Cleaning up the message queue...\n", prog_name);
+    printf("Info %s: Cleaning up the message queue...", prog_name);
+    clear_eol();
     msgctl(msgid, IPC_RMID, (struct msqid_ds*)0);
   }
-  printf("Info %s: Killing Clients...\n", prog_name);
+  printf("Info %s: Killing Clients...", prog_name);
+  clear_eol();
   for (int i = 0; i < 26; ++i) {
     if (clients[i] != 0) {
       kill(clients[i], SIGTERM);
     }
   }
-  printf("Info %s: Closing the fifo...\n", prog_name);
+  printf("Info %s: Closing the fifo...", prog_name);
+  clear_eol();
   close(display);
   remove(PIPE_DISPLAY);
-  printf("Info %s: Freeing memory...\n", prog_name);
+  printf("Info %s: Freeing memory...", prog_name);
+  clear_eol();
   free(grid);
   free(prog_name);
-  free(output);
 }
 void sig_handler() {
+  printf("\n");
+  setBackgroundColor(GREEN);
   cleanup();
+  resetColor();
   exit(EXIT_SUCCESS);
 }
 bool on_board(char id, long clients[]) {

@@ -15,6 +15,7 @@ int msgid = -1;
 
 void handle_sigint(int sig);
 void handle_sigterm(int sig);
+void cleanup();
 char* dirIDtoStr(char id);
 
 int main(int argc, char const* argv[]) {
@@ -30,17 +31,29 @@ int main(int argc, char const* argv[]) {
 
   /* Argument Handling */
   if (argc != 2) {
-    fprintf(stderr, "Usage: %s <ID CHAR>\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED"Usage: %s <ID CHAR>", prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   client_id = toupper(argv[1][0]);
   if (!isalpha(client_id)) {
-    fprintf(stderr, "Error: %s You have to use a letter as ID\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED"Error: %s You have to use a letter as ID", prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   if (!isupper(client_id)) {
-    fprintf(stderr, "Error: %s You have to use an upper case letter as ID\n",
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED"Error: %s You have to use an upper case letter as ID",
             prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   msg.msg_to = SERVER;
@@ -50,32 +63,48 @@ int main(int argc, char const* argv[]) {
   /* Message Queue oeffnen von msgget */
   if ((msgid = msgget(KEY, PERM)) == -1) {
     /* error handling */
-    fprintf(stderr, "%s: Can't access message queue\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "Error %s: Can't access message queue", prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
     /* error handling */
-    fprintf(stderr, "%s: Can't send discovery message\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "Error %s: Can't send discovery message", prog_name);
     return EXIT_FAILURE;
   }
   if (msgrcv(msgid, &init_pos, sizeof(init_pos), my_pid, 0) == -1) {
     // error handling
-    fprintf(stderr, "%s: Can't receive initial position from message queue\n",
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "Error %s: Can't receive initial position from message queue",
             prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   if (init_pos.status == REG_FULL) {
-    fprintf(stderr, "%s: The grid is full.\n", prog_name);
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "Error %s: The grid is full.", prog_name);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
-  }
-  if (init_pos.status == REG_DOUBLE) {
-    fprintf(stderr, "%s: The ID %c is allready in use.\n", prog_name,
+  } else if (init_pos.status == REG_DOUBLE) {
+    setBackgroundColor(RED);
+    fprintf(stderr, BG_RED "%s: The ID %c is allready in use.", prog_name,
             client_id);
+    clear_eol();
+    cleanup();
+    resetColor();
     return EXIT_FAILURE;
   }
   saveDefaultColor();
   setColor(LIGHTBLUE);
-  printf("\nWelcome to the Vehicleclient\n");
+  printf("\nWelcome to the vehicleclient\n");
   printf("\\ō͡≡o˞̶\n");
   printf("by Thomas Rauhofer\nand Tobias Watzek\n\n");
   printf("Your ID is %c\n\n", client_id);
@@ -101,53 +130,74 @@ int main(int argc, char const* argv[]) {
       msg.command = command;
       if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
         /* error handling */
-        fprintf(stderr, "%s: Can't send command\n", prog_name);
+        setBackgroundColor(RED);
+        fprintf(stderr, BG_RED "Error %s: Can't send command", prog_name);
+        clear_eol();
+        cleanup();
+        resetColor();
         return EXIT_FAILURE;
       }
       if (command != 'T') {
         printf("%c navigated %s\n", msg.client_id, dirIDtoStr(msg.command));
+      } else {
+        cont = false;
       }
     } else {
+      setColor(YELLOW);
       printf("Command not found.\n");
+      resetColor();
     }
   }
   return EXIT_SUCCESS;
 }
 
+void cleanup() {
+  clear_eol();
+  printf("Info %s: Exiting...", prog_name);
+  clear_eol();
+  printf("Info %s: Freeing memory", prog_name);
+  clear_eol();
+  free(prog_name);
+}
+
 void handle_sigint(int sig) {
-  if (prog_name != NULL) {
-    setColor(LIGHTBLUE);
-    printf("\nInfo: %s SIGINT received\n", prog_name);
+  setBackgroundColor(BLUE);
+  printf("\nInfo %s: SIGINT received", prog_name);
+  clear_eol();
+  if(msgid != -1) {
+    printf("Info %s: Sending terminate command to server", prog_name);
+    clear_eol();
     resetColor();
-    if(msgid != -1) {
-      setColor(LIGHTBLUE);
-      printf("Info: %s Sending terminate command to server. \n", prog_name);
+    navigation msg;
+    msg.msg_to = SERVER;
+    msg.msg_from = (long)getpid();
+    msg.client_id = client_id;
+    msg.command = 'T';
+    if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
+      /* error handling */
+      setBackgroundColor(RED);
+      fprintf(stderr, BG_RED"Error %s: Can't send command", prog_name);
+      clear_eol();
       resetColor();
-      navigation msg;
-      msg.msg_to = SERVER;
-      msg.msg_from = (long)getpid();
-      msg.client_id = client_id;
-      msg.command = 'T';
-      if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
-        /* error handling */
-        fprintf(stderr, "%s: Can't send command\n", prog_name);
-        exit(EXIT_FAILURE);
-      }
-    } else {
-      exit(sig);
+      exit(EXIT_FAILURE);
     }
+  } else {
+    cleanup();
+    resetColor();
+    exit(sig);
   }
 }
 
 void handle_sigterm(int sig) {
-  if (prog_name != NULL) {
-    printf("\nInfo: %s SIGTERM received\n", prog_name);
-    printf("\nInfo: %s Vehicle %c has been eliminated.\n", prog_name, client_id);
-    exit(sig);
-  } else {
-    printf("\nVehicle has been eliminated.\n");
-    exit(sig);
-  }
+  resetColor();
+  setBackgroundColor(GREEN);
+  printf("\nInfo %s: SIGTERM received", prog_name);
+  clear_eol();
+  printf("Info %s: Vehicle %c has been eliminated.", prog_name, client_id);
+  clear_eol();
+  cleanup();
+  resetColor();
+  exit(EXIT_SUCCESS);
 }
 
 char* dirIDtoStr(char id) {
