@@ -279,6 +279,8 @@ int main(int argc, char* argv[]) {
       }
     }
     /** store the board to the output buffer */
+    /* print the board */
+    printf("-------------------------------\n");
     output[0] = '\n';
     int size_count = 1;
     for (int y = 0; y < height + 2; ++y) {
